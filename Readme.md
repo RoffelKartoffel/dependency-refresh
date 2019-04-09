@@ -4,7 +4,7 @@ dependency-refresh is meant to update rust dependency versions within Cargo.toml
 
 The tool reads the given toml files and checks online at https://crates.io for the latest version of each dependency. Be aware: The toml files are updated without any kind of backup.
 
-I am aware that is room for improvement in my rust code, so feel free to comment or submit small patches.
+I am aware that there is room for improvement in my rust code, so feel free to comment or submit small patches.
 
 Example usage:
 
