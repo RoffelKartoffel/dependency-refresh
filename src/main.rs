@@ -15,13 +15,10 @@ extern crate reqwest;
 extern crate serde_json;
 use serde_json::Value;
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(StructOpt)]
 struct Opt {
     #[structopt(raw(required = "true", min_values = "1"))]
     toml_files: Vec<String>,
-
-    #[structopt(short = "v", long = "verbose")]
-    verbose: bool,
 }
 
 fn main() -> Result<(), Box<error::Error>> {
