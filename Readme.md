@@ -6,7 +6,7 @@ The tool reads the given toml files and checks online at https://crates.io for t
 
 I am aware that there is room for improvement in my rust code, so feel free to comment or submit small patches.
 
-Example usage:
+## Example usage
 
 ```sh
 $ ./dr /home/jm/IdeaProjects/dependency-refresh/Cargo.toml
@@ -25,3 +25,8 @@ Reading file: /home/jm/IdeaProjects/dependency-refresh/Cargo.toml
                 Online version: 1.0.39
 $
 ```
+
+## Installation
+
+|  Arch linux | https://aur.archlinux.org/packages/rust-dependency-refresh/ |
+|-------------|-------------------------------------------------------------|
