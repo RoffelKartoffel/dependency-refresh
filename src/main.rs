@@ -16,6 +16,7 @@ extern crate serde_json;
 use serde_json::Value;
 
 #[derive(StructOpt)]
+#[structopt(name = "dependency-refresh", about = "A rust dependency version updater.")]
 struct Opt {
     #[structopt(raw(required = "true", min_values = "1"))]
     toml_files: Vec<String>,
