@@ -2,7 +2,6 @@ use std::error;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
-use std::sync::Arc;
 
 extern crate structopt;
 use structopt::StructOpt;
@@ -16,23 +15,29 @@ extern crate serde_json;
 use serde_json::Value;
 
 #[derive(StructOpt)]
-#[structopt(name = "dependency-refresh", about = "A rust dependency version updater.")]
+#[structopt(
+    name = "dependency-refresh",
+    about = "A rust dependency version updater."
+)]
 struct Opt {
     #[structopt(raw(required = "true", min_values = "1"))]
     toml_files: Vec<String>,
+
+    #[structopt(short = "u", long = "unsafe-file-updates")]
+    unsafe_file_updates: bool,
 }
 
 fn main() -> Result<(), Box<error::Error>> {
-    let opt = Arc::new(Opt::from_args());
+    let opt = Opt::from_args();
 
     for file in &opt.toml_files {
-        handle_file(file)?;
+        handle_file(file, &opt)?;
     }
 
     Ok(())
 }
 
-fn handle_file(filename: &str) -> Result<(), Box<error::Error>> {
+fn handle_file(filename: &str, options: &Opt) -> Result<(), Box<error::Error>> {
     println!("Reading file: {}", filename);
 
     let mut contents = String::new();
@@ -45,6 +50,12 @@ fn handle_file(filename: &str) -> Result<(), Box<error::Error>> {
     let new_contents = update_toml(&contents)?;
     if new_contents == contents {
         return Ok(());
+    }
+
+    if !options.unsafe_file_updates {
+        let filename_old = filename.to_string() + ".old";
+        let _ = fs::remove_file(&filename_old);
+        fs::copy(filename, filename_old)?;
     }
 
     fs::write(filename, new_contents)?;
