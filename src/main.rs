@@ -31,13 +31,13 @@ fn main() -> Result<(), Box<error::Error>> {
     let opt = Opt::from_args();
 
     for file in &opt.toml_files {
-        handle_file(file, &opt)?;
+        handle_file(file, opt.unsafe_file_updates)?;
     }
 
     Ok(())
 }
 
-fn handle_file(filename: &str, options: &Opt) -> Result<(), Box<error::Error>> {
+fn handle_file(filename: &str, unsafe_file_updates: bool) -> Result<(), Box<error::Error>> {
     println!("Reading file: {}", filename);
 
     let mut contents = String::new();
@@ -52,7 +52,7 @@ fn handle_file(filename: &str, options: &Opt) -> Result<(), Box<error::Error>> {
         return Ok(());
     }
 
-    if !options.unsafe_file_updates {
+    if !unsafe_file_updates {
         let filename_old = filename.to_string() + ".old";
         let _ = fs::remove_file(&filename_old);
         fs::copy(filename, filename_old)?;
