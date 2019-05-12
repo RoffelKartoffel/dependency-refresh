@@ -3,9 +3,6 @@ use std::fs;
 use std::fs::File;
 use std::io::Read;
 
-extern crate structopt;
-use structopt::StructOpt;
-
 extern crate toml_edit;
 use toml_edit::{value, Document};
 
@@ -14,30 +11,8 @@ extern crate reqwest;
 extern crate serde_json;
 use serde_json::Value;
 
-#[derive(StructOpt)]
-#[structopt(
-    name = "dependency-refresh",
-    about = "A rust dependency version updater."
-)]
-struct Opt {
-    #[structopt(raw(required = "true", min_values = "1"))]
-    toml_files: Vec<String>,
 
-    #[structopt(short = "u", long = "unsafe-file-updates")]
-    unsafe_file_updates: bool,
-}
-
-fn main() -> Result<(), Box<error::Error>> {
-    let opt = Opt::from_args();
-
-    for file in &opt.toml_files {
-        handle_file(file, opt.unsafe_file_updates)?;
-    }
-
-    Ok(())
-}
-
-fn handle_file(filename: &str, unsafe_file_updates: bool) -> Result<(), Box<error::Error>> {
+pub fn handle_file(filename: &str, unsafe_file_updates: bool) -> Result<(), Box<error::Error>> {
     println!("Reading file: {}", filename);
 
     let mut contents = String::new();
