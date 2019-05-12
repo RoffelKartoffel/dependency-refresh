@@ -11,8 +11,10 @@ extern crate reqwest;
 extern crate serde_json;
 use serde_json::Value;
 
-
-pub fn handle_file(filename: &str, unsafe_file_updates: bool) -> Result<(), Box<error::Error>> {
+pub fn update_toml_file(
+    filename: &str,
+    unsafe_file_updates: bool,
+) -> Result<(), Box<error::Error>> {
     println!("Reading file: {}", filename);
 
     let mut contents = String::new();
