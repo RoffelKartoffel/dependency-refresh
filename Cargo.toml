@@ -6,6 +6,7 @@ license = "GPL-3.0-only"
 description = "This tool is meant to update rust dependency versions within Cargo.toml files."
 repository = "https://github.com/RoffelKartoffel/dependency-refresh"
 readme = "README.md"
+keywords = ["toml", "dependencies", "Cargo", "update"]
 
 [dependencies]
 structopt = "0.2.15"
