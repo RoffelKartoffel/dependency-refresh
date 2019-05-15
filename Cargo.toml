@@ -5,6 +5,7 @@ authors = ["Jan Murawski <jm@rq-project.net>"]
 license = "GPL-3.0-only"
 description = "This tool is meant to update rust dependency versions within Cargo.toml files."
 repository = "https://github.com/RoffelKartoffel/dependency-refresh"
+readme = "README.md"
 
 [dependencies]
 structopt = "0.2.15"
