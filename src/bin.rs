@@ -11,7 +11,7 @@ use structopt::StructOpt;
     about = "A rust dependency version updater."
 )]
 struct Opt {
-    #[structopt(raw(required = "true", min_values = "1"))]
+    #[structopt(required = true, min_values = 1)]
     toml_files: Vec<String>,
 
     #[structopt(short = "u", long = "unsafe-file-updates")]
