@@ -14,7 +14,7 @@ use serde_json::Value;
 pub fn update_toml_file(
     filename: &str,
     unsafe_file_updates: bool,
-) -> Result<(), Box<error::Error>> {
+) -> Result<(), Box<dyn error::Error>> {
     println!("Reading file: {}", filename);
 
     let mut contents = String::new();
@@ -63,7 +63,7 @@ toml_edit = "0.1.3"
     assert_eq!(result, expected);
 }
 
-fn update_toml(toml: &str) -> Result<String, Box<error::Error>> {
+fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
     let mut doc = toml.parse::<Document>()?;
 
     let mut updates: Vec<(String, String)> = Vec::new();
@@ -99,7 +99,7 @@ fn update_toml(toml: &str) -> Result<String, Box<error::Error>> {
     Ok(doc.to_string())
 }
 
-fn lookup_latest_version(crate_name: &str) -> Result<String, Box<error::Error>> {
+fn lookup_latest_version(crate_name: &str) -> Result<String, Box<dyn error::Error>> {
     let uri = "https://crates.io/api/v1/crates/".to_string() + crate_name;
 
     let mut http_res = reqwest::get(&uri)?;

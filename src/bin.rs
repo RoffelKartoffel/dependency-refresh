@@ -18,7 +18,7 @@ struct Opt {
     unsafe_file_updates: bool,
 }
 
-fn main() -> Result<(), Box<error::Error>> {
+fn main() -> Result<(), Box<dyn error::Error>> {
     let opt = Opt::from_args();
 
     for file in &opt.toml_files {
