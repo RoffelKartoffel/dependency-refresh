@@ -55,8 +55,8 @@ toml_edit = "0.1.3"
 version = "0.1.0"
 
 [dependencies]
-structopt = "0.2.15"
-toml_edit = "0.1.3"
+structopt = "0.3.3"
+toml_edit = "0.1.5"
     "#;
 
     let result = update_toml(toml).unwrap();
