@@ -15,7 +15,7 @@ reqwest = "0.9.24"
 serde_json = "1.0.44"
 
 [lib]
-name = "drlib"
+name = "libdr"
 path = "src/lib.rs"
 
 [[bin]]

@@ -1,4 +1,4 @@
-extern crate drlib;
+extern crate libdr;
 
 use std::error;
 
@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let opt = Opt::from_args();
 
     for file in &opt.toml_files {
-        drlib::update_toml_file(file, opt.unsafe_file_updates)?;
+        libdr::update_toml_file(file, opt.unsafe_file_updates)?;
     }
 
     Ok(())
