@@ -55,7 +55,7 @@ toml_edit = "0.1.3"
 version = "0.1.0"
 
 [dependencies]
-structopt = "0.3.3"
+structopt = "0.3.14"
 toml_edit = "0.1.5"
     "#;
 
