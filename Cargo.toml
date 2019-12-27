@@ -1,6 +1,6 @@
 [package]
 name = "dependency-refresh"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Jan Murawski <jm@rq-project.net>"]
 license = "GPL-3.0-only"
 description = "This tool is meant to update rust dependency versions within Cargo.toml files."
