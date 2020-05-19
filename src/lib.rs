@@ -10,6 +10,7 @@ extern crate reqwest;
 
 extern crate serde_json;
 use serde_json::Value;
+use reqwest::header::USER_AGENT;
 
 pub fn update_toml_file(
     filename: &str,
@@ -100,11 +101,19 @@ fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
 }
 
 fn lookup_latest_version(crate_name: &str) -> Result<String, Box<dyn error::Error>> {
+
+    const NAME: &'static str = env!("CARGO_PKG_NAME");
+    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+    const REPO: &'static str = env!("CARGO_PKG_REPOSITORY");
+    let user_agent = format!("{} {} ( {} )", NAME, VERSION, REPO);
+
     let uri = "https://crates.io/api/v1/crates/".to_string() + crate_name;
 
-    let mut http_res = reqwest::get(&uri)?;
-    let mut http_body = String::new();
-    http_res.read_to_string(&mut http_body)?;
+    let client = reqwest::blocking::Client::new();
+    let http_body = client.get(&uri)
+        .header(USER_AGENT, &user_agent)
+        .send()?
+        .text()?;
 
     let json_doc: Value = serde_json::from_str(&http_body)?;
     let mut version: String = json_doc["versions"][0]["num"].to_string();
