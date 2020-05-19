@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::Read;
 
 extern crate toml_edit;
-use toml_edit::{value, Document};
+use toml_edit::Document;
 
 extern crate reqwest;
 
@@ -65,37 +65,35 @@ toml_edit = "0.1.5"
 }
 
 fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
-    let mut doc = toml.parse::<Document>()?;
+    let doc = toml.parse::<Document>()?;
 
-    let mut updates: Vec<(String, String)> = Vec::new();
-    {
-        let section = &doc["dependencies"].as_table();
-        for key in section {
-            for (the_crate, local_version) in key.iter() {
-                let local_version = local_version.as_value().unwrap();
-                let local_version = match local_version.as_str() {
-                    Some(v) => v.trim(),
-                    None => {
-                        println!("** Error: Can not parse {}", &local_version);
-                        continue;
-                    }
-                };
+    let mut updates = Vec::new();
 
-                println!("\tFound: {}", the_crate);
+    if let Some(table) = &doc["dependencies"].as_table() {
+        for (the_crate, item) in table.iter() {
+            println!("\tFound: {}", the_crate);
+
+            let value = item.as_value().unwrap();
+            if let Some(local_version) = value.as_str() {
+                let local_version = local_version.trim();
                 println!("\t\tLocal version:  {}", local_version);
 
                 let online_version = lookup_latest_version(&the_crate)?;
                 println!("\t\tOnline version: {}", &online_version);
 
                 if local_version != online_version {
-                    updates.push((the_crate.to_string(), online_version));
+                    updates.push((the_crate.to_string(), toml_edit::value(online_version)));
                 }
+            }
+            else {
+                println!("** Error: Can not parse {}", &value);
             }
         }
     }
 
-    for (the_crate, version) in updates {
-        doc["dependencies"][&the_crate] = value(version);
+    let mut doc = doc;
+    for (the_crate, value) in updates {
+        doc["dependencies"][&the_crate] = value;
     }
     Ok(doc.to_string())
 }
