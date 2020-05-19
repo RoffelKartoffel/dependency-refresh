@@ -107,7 +107,7 @@ fn lookup_latest_version(crate_name: &str) -> Result<String, Box<dyn error::Erro
     const REPO: &'static str = env!("CARGO_PKG_REPOSITORY");
     let user_agent = format!("{} {} ( {} )", NAME, VERSION, REPO);
 
-    let uri = "https://crates.io/api/v1/crates/".to_string() + crate_name;
+    let uri = format!("https://crates.io/api/v1/crates/{}", crate_name);
 
     let client = reqwest::blocking::Client::new();
     let http_body = client.get(&uri)
