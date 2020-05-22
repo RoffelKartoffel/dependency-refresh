@@ -47,6 +47,7 @@ fn test_update_toml() {
 version = "0.1.0"
 
 [dependencies]
+reqwest = { version = "0.10.3", features = ["blocking"] }
 structopt = "0.2"
 toml_edit = "0.1.3"
     "#;
@@ -56,6 +57,7 @@ toml_edit = "0.1.3"
 version = "0.1.0"
 
 [dependencies]
+reqwest = { version = "0.10.4", features = ["blocking"] }
 structopt = "0.3.14"
 toml_edit = "0.1.5"
     "#;
@@ -67,34 +69,53 @@ toml_edit = "0.1.5"
 fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
     let doc = toml.parse::<Document>()?;
 
-    let mut updates = Vec::new();
+    let mut updates_crate = Vec::new();
+    let mut updates_crate_version = Vec::new();
 
-    if let Some(table) = &doc["dependencies"].as_table() {
-        for (the_crate, item) in table.iter() {
-            println!("\tFound: {}", the_crate);
+    let table = &doc["dependencies"].as_table().unwrap();
+    for (the_crate, item) in table.iter() {
+        println!("\tFound: {}", the_crate);
 
-            let value = item.as_value().unwrap();
-            if let Some(local_version) = value.as_str() {
-                let local_version = local_version.trim();
-                println!("\t\tLocal version:  {}", local_version);
+        let value = item.as_value().unwrap();
+        if let Some(local_version) = value.as_str() {
+            let local_version = local_version.trim();
+            println!("\t\tLocal version:  {}", local_version);
 
-                let online_version = lookup_latest_version(&the_crate)?;
-                println!("\t\tOnline version: {}", &online_version);
+            let online_version = lookup_latest_version(&the_crate)?;
+            println!("\t\tOnline version: {}", &online_version);
 
-                if local_version != online_version {
-                    updates.push((the_crate.to_string(), toml_edit::value(online_version)));
+            if local_version != online_version {
+                updates_crate.push((the_crate.to_string(), toml_edit::value(online_version)));
+            }
+        }
+        else if let Some(inline_table) =  value.as_inline_table() {
+            if let Some(value) = inline_table.get("version") {
+                if let Some(local_version) = value.as_str() {
+                    let local_version = local_version.trim();
+                    println!("\t\tLocal version:  {}", local_version);
+
+                    let online_version = lookup_latest_version(&the_crate)?;
+                    println!("\t\tOnline version: {}", &online_version);
+
+                    if local_version != online_version {
+                        updates_crate_version.push((the_crate.to_string(), toml_edit::value(online_version)));
+                    }
                 }
             }
-            else {
-                println!("** Error: Can not parse {}", &value);
-            }
+        }
+        else {
+            println!("** Error: Can not parse {}", &value);
         }
     }
 
     let mut doc = doc;
-    for (the_crate, value) in updates {
-        doc["dependencies"][&the_crate] = value;
+    for (the_crate, version) in updates_crate {
+        doc["dependencies"][&the_crate] = version;
     }
+    for (the_crate, version) in updates_crate_version {
+        doc["dependencies"][&the_crate]["version"] = version;
+    }
+
     Ok(doc.to_string())
 }
 
