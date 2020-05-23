@@ -128,7 +128,9 @@ fn lookup_latest_version(crate_name: &str) -> Result<String, Box<dyn error::Erro
 
     let uri = format!("https://crates.io/api/v1/crates/{}", crate_name);
 
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::blocking::Client::builder()
+        .gzip(true)
+        .build()?;
     let http_body = client.get(&uri)
         .header(USER_AGENT, &user_agent)
         .send()?
