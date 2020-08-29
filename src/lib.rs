@@ -57,9 +57,9 @@ toml_edit = "0.1.3"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.10.4", features = ["blocking"] }
-structopt = "0.3.14"
-toml_edit = "0.1.5"
+reqwest = { version = "0.10.8", features = ["blocking"] }
+structopt = "0.3.18"
+toml_edit = "0.2.0"
     "#;
 
     let result = update_toml(toml).unwrap();
