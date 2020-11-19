@@ -57,8 +57,8 @@ toml_edit = "0.1.3"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.10.8", features = ["blocking"] }
-structopt = "0.3.18"
+reqwest = { version = "0.11.2", features = ["blocking"] }
+structopt = "0.3.21"
 toml_edit = "0.2.0"
     "#;
 
