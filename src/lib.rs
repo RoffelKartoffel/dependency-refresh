@@ -121,9 +121,9 @@ fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
 
 fn lookup_latest_version(crate_name: &str) -> Result<String, Box<dyn error::Error>> {
 
-    const NAME: &'static str = env!("CARGO_PKG_NAME");
-    const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-    const REPO: &'static str = env!("CARGO_PKG_REPOSITORY");
+    const NAME: &str = env!("CARGO_PKG_NAME");
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    const REPO: &str = env!("CARGO_PKG_REPOSITORY");
     let user_agent = format!("{} {} ( {} )", NAME, VERSION, REPO);
 
     let uri = format!("https://crates.io/api/v1/crates/{}", crate_name);
