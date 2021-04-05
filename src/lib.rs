@@ -12,9 +12,25 @@ extern crate serde_json;
 use serde_json::Value;
 use reqwest::header::USER_AGENT;
 
+extern crate semver;
+use semver::Version;
+use semver::VersionReq;
+
+#[derive(Debug)]
+struct Error(String);
+
+impl error::Error for Error {}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 pub fn update_toml_file(
     filename: &str,
     unsafe_file_updates: bool,
+    use_semver: bool,
 ) -> Result<(), Box<dyn error::Error>> {
     println!("Reading file: {}", filename);
 
@@ -25,7 +41,7 @@ pub fn update_toml_file(
             .expect("Something went wrong reading the file.");
     }
 
-    let new_contents = update_toml(&contents)?;
+    let new_contents = update_toml(&contents, use_semver)?;
     if new_contents == contents {
         return Ok(());
     }
@@ -48,11 +64,11 @@ version = "0.1.0"
 
 [dependencies]
 reqwest = { version = "0.10.3", features = ["blocking"] }
-structopt = "0.2"
+structopt = "0.3"
 toml_edit = "0.1.3"
     "#;
 
-    let expected = r#"
+    let expected_no_semver = r#"
 [package]
 version = "0.1.0"
 
@@ -62,11 +78,54 @@ structopt = "0.3.21"
 toml_edit = "0.2.0"
     "#;
 
-    let result = update_toml(toml).unwrap();
-    assert_eq!(result, expected);
+    let expected_semver = r#"
+[package]
+version = "0.1.0"
+
+[dependencies]
+reqwest = { version = "0.11.2", features = ["blocking"] }
+structopt = "0.3"
+toml_edit = "0.2.0"
+    "#;
+
+    let result = update_toml(toml, false).unwrap();
+    assert_eq!(result, expected_no_semver);
+
+    let result = update_toml(toml, true).unwrap();
+    assert_eq!(result, expected_semver);
 }
 
-fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
+fn version_matches(local_version: &str,
+                   online_version: &str,
+                   use_semver: bool)
+                   -> Result<bool, Box<dyn error::Error>> {
+    if use_semver {
+        let local_version_sem = match VersionReq::parse(local_version) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(Box::new(Error(format!("Failed to parse Cargo.toml version '{}': {}",
+                                                 local_version, e)))),
+        }?;
+        let online_version_sem = match Version::parse(online_version) {
+            Ok(v) => Ok(v),
+            Err(e) => Err(Box::new(Error(format!("Failed to parse online version '{}': {}",
+                                                 online_version, e)))),
+        }?;
+        Ok(local_version_sem.matches(&online_version_sem))
+    } else {
+        Ok(*local_version == *online_version)
+    }
+}
+
+fn update_info(the_crate: &str,
+               local_version: &str,
+               online_version: &str) {
+    println!("\tUpdating: {} {} => {}",
+             the_crate,
+             local_version,
+             online_version);
+}
+
+fn update_toml(toml: &str, use_semver: bool) -> Result<String, Box<dyn error::Error>> {
     let doc = toml.parse::<Document>()?;
 
     let mut updates_crate = Vec::new();
@@ -78,27 +137,27 @@ fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
 
         let value = item.as_value().unwrap();
         if let Some(local_version) = value.as_str() {
-            let local_version = local_version.trim();
+            let local_version = local_version.trim().to_string();
             println!("\t\tLocal version:  {}", local_version);
 
             let online_version = lookup_latest_version(&the_crate)?;
             println!("\t\tOnline version: {}", &online_version);
 
-            if local_version != online_version {
-                updates_crate.push((the_crate.to_string(), toml_edit::value(online_version)));
+            if !version_matches(&local_version, &online_version, use_semver)? {
+                updates_crate.push((the_crate.to_string(), local_version, online_version));
             }
         }
         else if let Some(inline_table) =  value.as_inline_table() {
             if let Some(value) = inline_table.get("version") {
                 if let Some(local_version) = value.as_str() {
-                    let local_version = local_version.trim();
+                    let local_version = local_version.trim().to_string();
                     println!("\t\tLocal version:  {}", local_version);
 
                     let online_version = lookup_latest_version(&the_crate)?;
                     println!("\t\tOnline version: {}", &online_version);
 
-                    if local_version != online_version {
-                        updates_crate_version.push((the_crate.to_string(), toml_edit::value(online_version)));
+                    if !version_matches(&local_version, &online_version, use_semver)? {
+                        updates_crate_version.push((the_crate.to_string(), local_version, online_version));
                     }
                 }
             }
@@ -109,11 +168,13 @@ fn update_toml(toml: &str) -> Result<String, Box<dyn error::Error>> {
     }
 
     let mut doc = doc;
-    for (the_crate, version) in updates_crate {
-        doc["dependencies"][&the_crate] = version;
+    for (the_crate, local_version, online_version) in updates_crate {
+        update_info(&the_crate, &local_version, &online_version);
+        doc["dependencies"][&the_crate] = toml_edit::value(online_version);
     }
-    for (the_crate, version) in updates_crate_version {
-        doc["dependencies"][&the_crate]["version"] = version;
+    for (the_crate, local_version, online_version) in updates_crate_version {
+        update_info(&the_crate, &local_version, &online_version);
+        doc["dependencies"][&the_crate]["version"] = toml_edit::value(online_version);
     }
 
     Ok(doc.to_string())
