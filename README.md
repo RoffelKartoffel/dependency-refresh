@@ -4,26 +4,57 @@ dependency-refresh is meant to update rust dependency versions within Cargo.toml
 
 The tool reads the given toml files and checks online at https://crates.io for the latest version of each dependency.
 
+By default dependency-refresh compares the versions according to Semantic versioning (see https://semver.org/) rules. Therefore, dependency-refresh does not update the version in the local Cargo.toml, if the new crates.io version is a compatible minor update. This behavior usually is desired, because Cargo uses the latest compatible version anyway. To override this, pass the option --exact to dependency-refresh. That will disable Semantic versioning compare and will always trigger an update of the local version.
+
 I am aware that there is room for improvement in my rust code, so feel free to comment or submit small patches.
 
-## Example usage
+## Example usage with SemVer (default)
 
 ```sh
-$ ./dr /home/jm/IdeaProjects/dependency-refresh/Cargo.toml
-Reading file: /home/jm/IdeaProjects/dependency-refresh/Cargo.toml
+$ ./target/debug/dr ./Cargo.toml
+Reading file: ./Cargo.toml
         Found: structopt
-                Local version:  0.2
-                Online version: 0.2.15
+                Local version:  0.3.0
+                Online version: 0.3.21
         Found: toml_edit
-                Local version:  0.1.3
-                Online version: 0.1.3
+                Local version:  0.2.0
+                Online version: 0.2.0
         Found: reqwest
-                Local version:  0.9.13
-                Online version: 0.9.13
+                Local version:  0.11.0
+                Online version: 0.11.2
         Found: serde_json
-                Local version:  1.0
-                Online version: 1.0.39
-$
+                Local version:  1.0.0
+                Online version: 1.0.64
+        Found: semver
+                Local version:  0.10.0
+                Online version: 0.11.0
+        Updating: semver 0.10.0 => 0.11.0
+```
+
+## Example usage with exact matching (no SemVer)
+
+```sh
+$ ./target/debug/dr --exact ./Cargo.toml
+Reading file: ./Cargo.toml
+        Found: structopt
+                Local version:  0.3.0
+                Online version: 0.3.21
+        Found: toml_edit
+                Local version:  0.2.0
+                Online version: 0.2.0
+        Found: reqwest
+                Local version:  0.11.0
+                Online version: 0.11.2
+        Found: serde_json
+                Local version:  1.0.0
+                Online version: 1.0.64
+        Found: semver
+                Local version:  0.10.0
+                Online version: 0.11.0
+        Updating: structopt 0.3.0 => 0.3.21
+        Updating: serde_json 1.0.0 => 1.0.64
+        Updating: semver 0.10.0 => 0.11.0
+        Updating: reqwest 0.11.0 => 0.11.2
 ```
 
 ## Installation
