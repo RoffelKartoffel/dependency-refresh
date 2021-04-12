@@ -4,7 +4,7 @@ dependency-refresh is meant to update rust dependency versions within Cargo.toml
 
 The tool reads the given toml files and checks online at https://crates.io for the latest version of each dependency.
 
-By default dependency-refresh compares the versions according to Semantic versioning (see https://semver.org/) rules. Therefore, dependency-refresh does not update the version in the local Cargo.toml, if the new crates.io version is a compatible minor update. This behavior usually is desired, because Cargo uses the latest compatible version anyway. To override this, pass the option --exact to dependency-refresh. That will disable Semantic versioning compare and will always trigger an update of the local version.
+By default dependency-refresh compares the versions according to Semantic versioning (see https://semver.org/) rules the same way Cargo does (see https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html). Therefore, dependency-refresh does not update the version in the local Cargo.toml, if the new crates.io version is a compatible minor update. This behavior usually is desired, because Cargo uses the latest compatible version anyway. To override this, pass the option --exact to dependency-refresh. That will disable Semantic versioning compare and will always trigger an update of the local version.
 
 I am aware that there is room for improvement in my rust code, so feel free to comment or submit small patches.
 
