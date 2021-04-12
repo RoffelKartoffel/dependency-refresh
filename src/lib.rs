@@ -57,7 +57,7 @@ pub fn update_toml_file(
 }
 
 #[test]
-fn test_update_toml() {
+fn test_update_toml_semver() {
     let toml = r#"
 [package]
 version = "0.1.0"
@@ -68,17 +68,7 @@ structopt = "0.3"
 toml_edit = "0.1.3"
     "#;
 
-    let expected_no_semver = r#"
-[package]
-version = "0.1.0"
-
-[dependencies]
-reqwest = { version = "0.11.2", features = ["blocking"] }
-structopt = "0.3.21"
-toml_edit = "0.2.0"
-    "#;
-
-    let expected_semver = r#"
+    let expected = r#"
 [package]
 version = "0.1.0"
 
@@ -88,11 +78,35 @@ structopt = "0.3"
 toml_edit = "0.2.0"
     "#;
 
-    let result = update_toml(toml, false).unwrap();
-    assert_eq!(result, expected_no_semver);
-
     let result = update_toml(toml, true).unwrap();
-    assert_eq!(result, expected_semver);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_update_toml_exact() {
+    let toml = r#"
+[package]
+version = "0.1.0"
+
+[dependencies]
+reqwest = { version = "0.10.3", features = ["blocking"] }
+structopt = "0.3"
+toml_edit = "0.1.3"
+    "#;
+
+    let expected = r#"
+[package]
+version = "0.1.0"
+
+[dependencies]
+reqwest = { version = "0.11.2", features = ["blocking"] }
+structopt = "0.3.21"
+toml_edit = "0.2.0"
+    "#;
+
+    let result = update_toml(toml, false).unwrap();
+    assert_eq!(result, expected);
+
 }
 
 fn version_matches(local_version: &str,
