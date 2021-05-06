@@ -65,7 +65,9 @@ version = "0.1.0"
 [dependencies]
 reqwest = { version = "0.10.3", features = ["blocking"] }
 structopt = "0.3"
-toml_edit = "0.1.3"
+
+[dependencies.toml_edit]
+version = "0.1.3"
     "#;
 
     let expected = r#"
@@ -75,7 +77,9 @@ version = "0.1.0"
 [dependencies]
 reqwest = { version = "0.11.2", features = ["blocking"] }
 structopt = "0.3"
-toml_edit = "0.2.0"
+
+[dependencies.toml_edit]
+version = "0.2.0"
     "#;
 
     let result = update_toml(toml, true).unwrap();
@@ -91,7 +95,9 @@ version = "0.1.0"
 [dependencies]
 reqwest = { version = "0.10.3", features = ["blocking"] }
 structopt = "0.3"
-toml_edit = "0.1.3"
+
+[dependencies.toml_edit]
+version = "0.1.3"
     "#;
 
     let expected = r#"
@@ -101,7 +107,9 @@ version = "0.1.0"
 [dependencies]
 reqwest = { version = "0.11.2", features = ["blocking"] }
 structopt = "0.3.21"
-toml_edit = "0.2.0"
+
+[dependencies.toml_edit]
+version = "0.2.0"
     "#;
 
     let result = update_toml(toml, false).unwrap();
@@ -130,6 +138,23 @@ fn version_matches(local_version: &str,
     }
 }
 
+fn check_version(updates_crate: &mut Vec<(String, String, String)>,
+                 the_crate: &str,
+                 local_version: &str,
+                 use_semver: bool)
+                 -> Result<(), Box<dyn error::Error>> {
+    let local_version = local_version.trim().to_string();
+    println!("\t\tLocal version:  {}", local_version);
+
+    let online_version = lookup_latest_version(the_crate)?;
+    println!("\t\tOnline version: {}", &online_version);
+
+    if !version_matches(&local_version, &online_version, use_semver)? {
+        updates_crate.push((the_crate.to_string(), local_version, online_version));
+    }
+    Ok(())
+}
+
 fn update_info(the_crate: &str,
                local_version: &str,
                online_version: &str) {
@@ -149,35 +174,28 @@ fn update_toml(toml: &str, use_semver: bool) -> Result<String, Box<dyn error::Er
     for (the_crate, item) in table.iter() {
         println!("\tFound: {}", the_crate);
 
-        let value = item.as_value().unwrap();
-        if let Some(local_version) = value.as_str() {
-            let local_version = local_version.trim().to_string();
-            println!("\t\tLocal version:  {}", local_version);
-
-            let online_version = lookup_latest_version(&the_crate)?;
-            println!("\t\tOnline version: {}", &online_version);
-
-            if !version_matches(&local_version, &online_version, use_semver)? {
-                updates_crate.push((the_crate.to_string(), local_version, online_version));
-            }
-        }
-        else if let Some(inline_table) =  value.as_inline_table() {
-            if let Some(value) = inline_table.get("version") {
+        if let Some(sub_table) = item.as_table() {
+            if let Some(value) = sub_table.get("version") {
                 if let Some(local_version) = value.as_str() {
-                    let local_version = local_version.trim().to_string();
-                    println!("\t\tLocal version:  {}", local_version);
-
-                    let online_version = lookup_latest_version(&the_crate)?;
-                    println!("\t\tOnline version: {}", &online_version);
-
-                    if !version_matches(&local_version, &online_version, use_semver)? {
-                        updates_crate_version.push((the_crate.to_string(), local_version, online_version));
-                    }
+                    check_version(&mut updates_crate_version, the_crate, local_version, use_semver)?;
                 }
             }
         }
         else {
-            println!("** Error: Can not parse {}", &value);
+            let value = item.as_value().unwrap();
+            if let Some(local_version) = value.as_str() {
+                check_version(&mut updates_crate, the_crate, local_version, use_semver)?;
+            }
+            else if let Some(inline_table) =  value.as_inline_table() {
+                if let Some(value) = inline_table.get("version") {
+                    if let Some(local_version) = value.as_str() {
+                        check_version(&mut updates_crate_version, the_crate, local_version, use_semver)?;
+                    }
+                }
+            }
+            else {
+                println!("** Error: Can not parse {}", &value);
+            }
         }
     }
 
