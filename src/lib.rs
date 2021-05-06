@@ -68,6 +68,9 @@ structopt = "0.3"
 
 [dependencies.toml_edit]
 version = "0.1.3"
+
+[build-dependencies]
+autocfg = "1.0.0"
     "#;
 
     let expected = r#"
@@ -80,6 +83,9 @@ structopt = "0.3"
 
 [dependencies.toml_edit]
 version = "0.2.0"
+
+[build-dependencies]
+autocfg = "1.0.0"
     "#;
 
     let result = update_toml(toml, true).unwrap();
@@ -98,6 +104,9 @@ structopt = "0.3"
 
 [dependencies.toml_edit]
 version = "0.1.3"
+
+[build-dependencies]
+autocfg = "1.0.0"
     "#;
 
     let expected = r#"
@@ -110,6 +119,9 @@ structopt = "0.3.21"
 
 [dependencies.toml_edit]
 version = "0.2.0"
+
+[build-dependencies]
+autocfg = "1.0.1"
     "#;
 
     let result = update_toml(toml, false).unwrap();
@@ -164,51 +176,57 @@ fn update_info(the_crate: &str,
              online_version);
 }
 
-fn update_toml(toml: &str, use_semver: bool) -> Result<String, Box<dyn error::Error>> {
-    let doc = toml.parse::<Document>()?;
+fn update_toml_dep_table(doc: &mut Document,
+                         table_name: &str,
+                         use_semver: bool)
+                         -> Result<(), Box<dyn error::Error>> {
+    if let Some(table) = &doc[table_name].as_table() {
+        let mut updates_crate = Vec::new();
+        let mut updates_crate_version = Vec::new();
 
-    let mut updates_crate = Vec::new();
-    let mut updates_crate_version = Vec::new();
+        for (the_crate, item) in table.iter() {
+            println!("\tFound: {}", the_crate);
 
-    let table = &doc["dependencies"].as_table().unwrap();
-    for (the_crate, item) in table.iter() {
-        println!("\tFound: {}", the_crate);
-
-        if let Some(sub_table) = item.as_table() {
-            if let Some(value) = sub_table.get("version") {
-                if let Some(local_version) = value.as_str() {
-                    check_version(&mut updates_crate_version, the_crate, local_version, use_semver)?;
-                }
-            }
-        }
-        else {
-            let value = item.as_value().unwrap();
-            if let Some(local_version) = value.as_str() {
-                check_version(&mut updates_crate, the_crate, local_version, use_semver)?;
-            }
-            else if let Some(inline_table) =  value.as_inline_table() {
-                if let Some(value) = inline_table.get("version") {
+            if let Some(sub_table) = item.as_table() {
+                if let Some(value) = sub_table.get("version") {
                     if let Some(local_version) = value.as_str() {
                         check_version(&mut updates_crate_version, the_crate, local_version, use_semver)?;
                     }
                 }
-            }
-            else {
-                println!("** Error: Can not parse {}", &value);
+            } else if let Some(value) = item.as_value() {
+                if let Some(local_version) = value.as_str() {
+                    check_version(&mut updates_crate, the_crate, local_version, use_semver)?;
+                }
+                else if let Some(inline_table) = value.as_inline_table() {
+                    if let Some(value) = inline_table.get("version") {
+                        if let Some(local_version) = value.as_str() {
+                            check_version(&mut updates_crate_version, the_crate, local_version, use_semver)?;
+                        }
+                    }
+                } else {
+                    println!("** Error: Can not parse {}", value);
+                }
+            } else {
+                println!("** Error: Item '{:?}' is neither table nor value.", item);
             }
         }
-    }
 
-    let mut doc = doc;
-    for (the_crate, local_version, online_version) in updates_crate {
-        update_info(&the_crate, &local_version, &online_version);
-        doc["dependencies"][&the_crate] = toml_edit::value(online_version);
+        for (the_crate, local_version, online_version) in updates_crate {
+            update_info(&the_crate, &local_version, &online_version);
+            doc[table_name][&the_crate] = toml_edit::value(online_version);
+        }
+        for (the_crate, local_version, online_version) in updates_crate_version {
+            update_info(&the_crate, &local_version, &online_version);
+            doc[table_name][&the_crate]["version"] = toml_edit::value(online_version);
+        }
     }
-    for (the_crate, local_version, online_version) in updates_crate_version {
-        update_info(&the_crate, &local_version, &online_version);
-        doc["dependencies"][&the_crate]["version"] = toml_edit::value(online_version);
-    }
+    Ok(())
+}
 
+fn update_toml(toml: &str, use_semver: bool) -> Result<String, Box<dyn error::Error>> {
+    let mut doc = toml.parse::<Document>()?;
+    update_toml_dep_table(&mut doc, "dependencies", use_semver)?;
+    update_toml_dep_table(&mut doc, "build-dependencies", use_semver)?;
     Ok(doc.to_string())
 }
 
