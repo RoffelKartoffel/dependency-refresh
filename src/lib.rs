@@ -78,11 +78,11 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.3", features = ["blocking"] }
+reqwest = { version = "0.11.4", features = ["blocking"] }
 structopt = "0.3"
 
 [dependencies.toml_edit]
-version = "0.2.0"
+version = "0.2.1"
 
 [build-dependencies]
 autocfg = "1.0.0"
@@ -114,11 +114,11 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.3", features = ["blocking"] }
+reqwest = { version = "0.11.4", features = ["blocking"] }
 structopt = "0.3.21"
 
 [dependencies.toml_edit]
-version = "0.2.0"
+version = "0.2.1"
 
 [build-dependencies]
 autocfg = "1.0.1"
