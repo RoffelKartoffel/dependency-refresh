@@ -24,13 +24,25 @@ struct Opt {
     /// versions and uses the latest compatible version anyway.
     #[structopt(short, long)]
     exact: bool,
+
+    /// Allow update to yanked versions.
+    #[structopt(short, long)]
+    yanked: bool,
+
+    /// Allow update to pre-release (-beta or -rc) versions.
+    #[structopt(short, long)]
+    pre_release: bool,
 }
 
 fn main() -> Result<(), Box<dyn error::Error>> {
     let opt = Opt::from_args();
 
     for file in &opt.toml_files {
-        libdr::update_toml_file(file, opt.unsafe_file_updates, !opt.exact)?;
+        libdr::update_toml_file(file,
+                                opt.unsafe_file_updates,
+                                !opt.exact,
+                                opt.yanked,
+                                opt.pre_release)?;
     }
 
     Ok(())
