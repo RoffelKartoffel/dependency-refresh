@@ -252,6 +252,7 @@ impl DepRefresh {
         let mut doc = toml.parse::<Document>()?;
         self.update_toml_dep_table(&mut doc, "dependencies")?;
         self.update_toml_dep_table(&mut doc, "build-dependencies")?;
+        self.update_toml_dep_table(&mut doc, "dev-dependencies")?;
         Ok(doc.to_string())
     }
 
