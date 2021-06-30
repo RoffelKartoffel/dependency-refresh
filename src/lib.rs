@@ -287,7 +287,7 @@ impl DepRefresh {
                     Some(version_num) => {
                         match Version::parse(version_num) {
                             Ok(version_num_sem) => {
-                                if version_num_sem.is_prerelease() && !self.allow_prerelease {
+                                if !version_num_sem.pre.is_empty() && !self.allow_prerelease {
                                     // Skip this pre-release.
                                     continue;
                                 }
