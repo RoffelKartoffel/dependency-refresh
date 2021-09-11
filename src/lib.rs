@@ -133,7 +133,7 @@ version = "0.1.0"
 
 [dependencies]
 reqwest = { version = "0.11.4", features = ["blocking"] }
-structopt = "0.3.21"
+structopt = "0.3.23"
 
 [dependencies.toml_edit]
 version = "0.2.1"
