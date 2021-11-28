@@ -2,6 +2,7 @@ use std::error;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 
 extern crate toml_edit;
 use toml_edit::Document;
@@ -27,46 +28,12 @@ impl std::fmt::Display for Error {
     }
 }
 
-struct DepRefresh {
-    use_semver:         bool,
-    allow_yanked:       bool,
-    allow_prerelease:   bool,
-}
-
-pub fn update_toml_file(
-    filename: &str,
-    unsafe_file_updates: bool,
-    use_semver: bool,
-    allow_yanked: bool,
-    allow_prerelease: bool,
-) -> Result<(), Box<dyn error::Error>> {
-    println!("Reading file: {}", filename);
-
-    let mut contents = String::new();
-    {
-        let mut f = File::open(filename)?;
-        f.read_to_string(&mut contents)
-            .expect("Something went wrong reading the file.");
-    }
-
-    let dr = DepRefresh {
-        use_semver,
-        allow_yanked,
-        allow_prerelease,
-    };
-    let new_contents = dr.update_toml(&contents)?;
-    if new_contents == contents {
-        return Ok(());
-    }
-
-    if !unsafe_file_updates {
-        let filename_old = filename.to_string() + ".old";
-        let _ = fs::remove_file(&filename_old);
-        fs::copy(filename, filename_old)?;
-    }
-
-    fs::write(filename, new_contents)?;
-    Ok(())
+#[derive(Clone)]
+pub struct DepRefresh {
+    unsafe_file_updates:    bool,
+    use_semver:             bool,
+    allow_yanked:           bool,
+    allow_prerelease:       bool,
 }
 
 #[test]
@@ -91,22 +58,18 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.4", features = ["blocking"] }
+reqwest = { version = "0.11.6", features = ["blocking"] }
 structopt = "0.3"
 
 [dependencies.toml_edit]
-version = "0.2.1"
+version = "0.10.0"
 
 [build-dependencies]
 autocfg = "1.0.0"
     "#;
 
-    let dr = DepRefresh {
-        use_semver:         true,
-        allow_yanked:       false,
-        allow_prerelease:   false,
-    };
-    let result = dr.update_toml(toml).unwrap();
+    let dr = DepRefresh::new(false, true, false, false);
+    let result = dr.update_toml(toml, &Path::new("Cargo.toml")).unwrap();
     assert_eq!(result, expected);
 }
 
@@ -132,27 +95,34 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.4", features = ["blocking"] }
-structopt = "0.3.23"
+reqwest = { version = "0.11.6", features = ["blocking"] }
+structopt = "0.3.25"
 
 [dependencies.toml_edit]
-version = "0.2.1"
+version = "0.10.0"
 
 [build-dependencies]
 autocfg = "1.0.1"
     "#;
 
-    let dr = DepRefresh {
-        use_semver:         false,
-        allow_yanked:       false,
-        allow_prerelease:   false,
-    };
-    let result = dr.update_toml(toml).unwrap();
+    let dr = DepRefresh::new(false, false, false, false);
+    let result = dr.update_toml(toml, &Path::new("Cargo.toml")).unwrap();
     assert_eq!(result, expected);
-
 }
 
 impl DepRefresh {
+    pub fn new(unsafe_file_updates: bool,
+               use_semver: bool,
+               allow_yanked: bool,
+               allow_prerelease: bool) -> DepRefresh {
+        DepRefresh {
+            unsafe_file_updates,
+            use_semver,
+            allow_yanked,
+            allow_prerelease,
+        }
+    }
+
     fn version_matches(&self,
                        local_version: &str,
                        online_version: &str)
@@ -248,12 +218,55 @@ impl DepRefresh {
         Ok(())
     }
 
-    fn update_toml(&self, toml: &str) -> Result<String, Box<dyn error::Error>> {
+    fn update_toml(&self, toml: &str, toml_filename: &Path) -> Result<String, Box<dyn error::Error>> {
         let mut doc = toml.parse::<Document>()?;
         self.update_toml_dep_table(&mut doc, "dependencies")?;
         self.update_toml_dep_table(&mut doc, "build-dependencies")?;
         self.update_toml_dep_table(&mut doc, "dev-dependencies")?;
+        if let Some(workspace) = &doc["workspace"].as_table() {
+            if let Some(members) = workspace.get("members") {
+                if let Some(members) = members.as_array() {
+                    for dirname in members.iter() {
+                        if let Some(dirname) = dirname.as_str() {
+                            let mut sub_cargo_toml = toml_filename.to_path_buf();
+                            sub_cargo_toml.pop();
+                            sub_cargo_toml.push(dirname);
+                            sub_cargo_toml.push("Cargo.toml");
+                            self.clone().update_toml_file(&sub_cargo_toml)?;
+                        }
+                    }
+                }
+            }
+        }
         Ok(doc.to_string())
+    }
+
+    pub fn update_toml_file(&self, toml_filename: &Path) -> Result<(), Box<dyn error::Error>> {
+        println!("Reading file: {}", toml_filename.display());
+
+        let mut contents = String::new();
+        {
+            let mut f = File::open(toml_filename)?;
+            f.read_to_string(&mut contents)
+                .expect("Something went wrong reading the file.");
+        }
+
+        let new_contents = self.update_toml(&contents, toml_filename)?;
+        if new_contents == contents {
+            return Ok(());
+        }
+
+        if !self.unsafe_file_updates {
+            let mut toml_filename_old = toml_filename.to_path_buf();
+            toml_filename_old.set_file_name(toml_filename_old.file_name()
+                                            .expect("No file name specified")
+                                            .to_string_lossy().to_string() + ".old");
+            let _ = fs::remove_file(&toml_filename_old);
+            fs::copy(toml_filename, toml_filename_old)?;
+        }
+
+        fs::write(toml_filename, new_contents)?;
+        Ok(())
     }
 
     fn lookup_latest_version(&self, crate_name: &str) -> Result<String, Box<dyn error::Error>> {

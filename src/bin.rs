@@ -1,6 +1,7 @@
 extern crate libdr;
 
 use std::error;
+use std::path::Path;
 
 extern crate structopt;
 use structopt::StructOpt;
@@ -38,11 +39,11 @@ fn main() -> Result<(), Box<dyn error::Error>> {
     let opt = Opt::from_args();
 
     for file in &opt.toml_files {
-        libdr::update_toml_file(file,
-                                opt.unsafe_file_updates,
-                                !opt.exact,
-                                opt.yanked,
-                                opt.pre_release)?;
+        let dr = libdr::DepRefresh::new(opt.unsafe_file_updates,
+                                        !opt.exact,
+                                        opt.yanked,
+                                        opt.pre_release);
+        dr.update_toml_file(&Path::new(file))?;
     }
 
     Ok(())
