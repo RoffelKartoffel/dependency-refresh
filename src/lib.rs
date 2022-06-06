@@ -91,11 +91,11 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.4", features = ["blocking"] }
+reqwest = { version = "0.11.10", features = ["blocking"] }
 structopt = "0.3"
 
 [dependencies.toml_edit]
-version = "0.2.1"
+version = "0.14.4"
 
 [build-dependencies]
 autocfg = "1.0.0"
@@ -132,14 +132,14 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.4", features = ["blocking"] }
-structopt = "0.3.23"
+reqwest = { version = "0.11.10", features = ["blocking"] }
+structopt = "0.3.26"
 
 [dependencies.toml_edit]
-version = "0.2.1"
+version = "0.14.4"
 
 [build-dependencies]
-autocfg = "1.0.1"
+autocfg = "1.1.0"
     "#;
 
     let dr = DepRefresh {
