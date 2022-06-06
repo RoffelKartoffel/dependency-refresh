@@ -91,11 +91,11 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.4", features = ["blocking"] }
+reqwest = { version = "0.11.10", features = ["blocking"] }
 structopt = "0.3"
 
 [dependencies.toml_edit]
-version = "0.2.1"
+version = "0.14.4"
 
 [build-dependencies]
 autocfg = "1.0.0"
@@ -132,14 +132,14 @@ autocfg = "1.0.0"
 version = "0.1.0"
 
 [dependencies]
-reqwest = { version = "0.11.4", features = ["blocking"] }
-structopt = "0.3.23"
+reqwest = { version = "0.11.10", features = ["blocking"] }
+structopt = "0.3"
 
 [dependencies.toml_edit]
-version = "0.2.1"
+version = "0.14.4"
 
 [build-dependencies]
-autocfg = "1.0.1"
+autocfg = "1.1.0"
     "#;
 
     let dr = DepRefresh {
@@ -238,14 +238,25 @@ impl DepRefresh {
 
             for (the_crate, local_version, online_version) in updates_crate {
                 self.update_info(&the_crate, &local_version, &online_version);
-                doc[table_name][&the_crate] = toml_edit::value(online_version);
+                let new_local_version = self.new_local_version(&local_version, &online_version);
+                doc[table_name][&the_crate] = toml_edit::value(new_local_version);
             }
             for (the_crate, local_version, online_version) in updates_crate_version {
                 self.update_info(&the_crate, &local_version, &online_version);
-                doc[table_name][&the_crate]["version"] = toml_edit::value(online_version);
+                let new_local_version = self.new_local_version(&local_version, &online_version);
+                doc[table_name][&the_crate]["version"] = toml_edit::value(new_local_version);
             }
         }
         Ok(())
+    }
+
+    // generate new version format with same segaments as the local_version
+    fn new_local_version<'a>(&self, local_version: &str, online_version: &'a str) -> &'a str {
+        let mut new_local_version = online_version;
+        for _ in 0..(3 - local_version.split('.').collect::<Vec<&str>>().len()) {
+            new_local_version = new_local_version.rsplit_once('.').map(|(head, _tail)| head).unwrap_or(online_version);
+        }
+        new_local_version
     }
 
     fn update_toml(&self, toml: &str) -> Result<String, Box<dyn error::Error>> {
