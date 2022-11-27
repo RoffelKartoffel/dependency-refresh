@@ -183,7 +183,9 @@ impl DepRefresh {
         println!("\t\tLocal version:  {}", local_version);
 
         let online_version = self.lookup_latest_version(the_crate)?;
-        println!("\t\tOnline version: {}", &online_version);
+        print!("\t\tOnline version: {}", &online_version);
+        let diff = if local_version != online_version { "*" } else { "" };
+        println!("\t{diff}");
 
         if !self.version_matches(&local_version, &online_version)? {
             updates_crate.push((the_crate.to_string(), local_version, online_version));
