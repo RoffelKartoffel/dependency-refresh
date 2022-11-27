@@ -15,19 +15,19 @@ $ ./target/debug/dr ./Cargo.toml
 Reading file: ./Cargo.toml
         Found: structopt
                 Local version:  0.3.0
-                Online version: 0.3.21
+                Online version: 0.3.21  *
         Found: toml_edit
                 Local version:  0.2.0
                 Online version: 0.2.0
         Found: reqwest
                 Local version:  0.11.0
-                Online version: 0.11.2
+                Online version: 0.11.2  *
         Found: serde_json
                 Local version:  1.0.0
-                Online version: 1.0.64
+                Online version: 1.0.64  *
         Found: semver
                 Local version:  0.10.0
-                Online version: 0.11.0
+                Online version: 0.11.0  *
         Updating: semver 0.10.0 => 0.11.0
 ```
 
@@ -38,19 +38,19 @@ $ ./target/debug/dr --exact ./Cargo.toml
 Reading file: ./Cargo.toml
         Found: structopt
                 Local version:  0.3.0
-                Online version: 0.3.21
+                Online version: 0.3.21  *
         Found: toml_edit
                 Local version:  0.2.0
                 Online version: 0.2.0
         Found: reqwest
                 Local version:  0.11.0
-                Online version: 0.11.2
+                Online version: 0.11.2  *
         Found: serde_json
                 Local version:  1.0.0
-                Online version: 1.0.64
+                Online version: 1.0.64  *
         Found: semver
                 Local version:  0.10.0
-                Online version: 0.11.0
+                Online version: 0.11.0  *
         Updating: structopt 0.3.0 => 0.3.21
         Updating: serde_json 1.0.0 => 1.0.64
         Updating: semver 0.10.0 => 0.11.0
